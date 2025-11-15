@@ -4,13 +4,20 @@ import com.shopping.Ecart.Model.Product;
 import com.shopping.Ecart.Service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = {
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
+})
 @RequestMapping("/api")
 
 public class ProductController {
@@ -41,4 +48,23 @@ public class ProductController {
     public void setService(ProductService service) {
         this.service = service;
     }
+
+    @PostMapping("/product")
+    public ResponseEntity<?> addProduct(
+            @RequestPart("product") Product product,
+            @RequestPart("imageFile") MultipartFile imageFile){
+        try {
+            Product saved = service.addProduct(product, imageFile);
+            return new ResponseEntity<>(saved, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("product/{productId}/image")
+    public ResponseEntity<byte[]> getImageByProductId(@PathVariable int productId){
+        Product product = service.getProductById(productId);
+        byte[] imageFile = product.getImageData();
+        return ResponseEntity.ok().contentType(MediaType.valueOf(product.getImageType())).body(imageFile);
+    }
 }
+
